@@ -1,0 +1,59 @@
+version: '3'
+
+services: 
+  nginx:
+    build: 
+      context: ./nginx
+      dockerfile: Dockerfile.prod
+    container_name: nginx
+    networks: 
+      - challenge-network
+    ports: 
+      - "8080:80"
+    depends_on: 
+     app:
+       condition: service_healthy
+
+  app:
+    build: 
+      context: ./node
+      dockerfile: Dockerfile.prod
+    container_name: app
+    networks: 
+      - challenge-network
+    tty: true
+    environment: 
+      - MYSQL_HOST=db
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=password
+      - MYSQL_DATABASE=nodedb
+    depends_on: 
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "lsof", "-i:3000"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+
+  db:
+    image: mysql:8.3.0
+    command: --default-authentication-plugin=mysql_native_password
+    container_name: db
+    restart: always
+    volumes:
+      - "./mysql/createTablePeople.sql:/docker-entrypoint-initdb.d/1.sql"
+    environment: 
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=nodedb
+    networks: 
+      - challenge-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+
+networks: 
+  challenge-network:
+    driver: bridge      
