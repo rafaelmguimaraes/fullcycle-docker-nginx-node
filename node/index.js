@@ -5,13 +5,11 @@ const connection = require('./connection');
 const app = express()
 const port = 3000
 
-const insertName = () => {
-    const fullName = faker.name.findName();
-    return `INSERT INTO people(name) values('${fullName}')`
-}
+const randonName = () => faker.name.findName();
 
 app.get('/', async (req,res) => {
-    await connection.execute(insertName())
+    await connection.execute('INSERT INTO people(name) values(?)',
+     [randonName()]);
     let page = `
         <h1>Full Cycle Rocks!</h1>
         <h2>Lista de nomes cadastrada no banco de dados:</h2>
