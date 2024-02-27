@@ -21,6 +21,9 @@ services:
     container_name: app
     networks: 
       - challenge-network
+    command: sh -c "npm install && node index.js"
+    volumes:
+      - ./node:/app
     tty: true
     environment: 
       - MYSQL_HOST=db
